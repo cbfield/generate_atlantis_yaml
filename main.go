@@ -179,8 +179,8 @@ func makeProjectConfig(project string, dependencies map[string][]string) Project
 	return projectConfig
 }
 
-// For a given project, list the relative paths from that project's directory
-// to the directories containing modules that the project depends on.
+// For a given absolute path to a directory containing Terraform configurations,
+// list the relative paths from that directory to the directories containing modules that the project depends on.
 //
 // This is done recursively. When a module directory is identified as a path dependency,
 // we also check for dependencies of that module, and so on, since changes to those
