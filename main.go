@@ -134,9 +134,9 @@ func addProjectsToConfig(atlantisConfig AtlantisConfig, projects []string, depen
 
 	for i := 0; i < len(projects); i++ {
 		go func(i int) {
+			defer wg.Done()
 			projectConfig := makeProjectConfig(projects[i], dependencies)
 			atlantisConfig.Projects = append(atlantisConfig.Projects, projectConfig)
-			defer wg.Done()
 		}(i)
 	}
 
