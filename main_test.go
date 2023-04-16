@@ -211,6 +211,24 @@ func TestGetWhenModifiedPaths(t *testing.T) {
 }
 
 func TestCleanPaths(t *testing.T) {
+	absPath := prepEnv(t)
+
+	dirtyPaths := []string{
+		absPath+"/project1/../modules/module1/**/*",
+		absPath+"/project1/../modules/module1/../module2/**/*",
+	}
+
+	expectedPaths := []string{
+		"**/*",
+		"../modules/module1/**/*",
+		"../modules/module2/**/*",
+	}
+
+	gotPaths := cleanPaths(dirtyPaths, absPath+"/project1")
+
+	if !reflect.DeepEqual(expectedPaths, gotPaths) {
+		t.Errorf("Expected paths:\n%s\n\nGot Paths:\n%s\n", prettyPrint(expectedPaths), prettyPrint(gotPaths))
+	}
 }
 
 func TestUnique(t *testing.T) {
