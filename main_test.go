@@ -151,6 +151,13 @@ func TestAddProjectsToConfig(t *testing.T) {
 }
 
 func TestFileExists(t *testing.T) {
+	absPath := prepEnv(t)
+	if !fileExists(absPath) {
+		t.Errorf("File expected to exist, but didn't: %q",absPath)
+	}
+	if fileExists(absPath+"potato") {
+		t.Errorf("File expected not to exist, but did: %q",absPath)
+	}
 }
 
 func TestMakeProjectConfig(t *testing.T) {
