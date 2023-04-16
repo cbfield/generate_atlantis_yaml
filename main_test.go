@@ -2,17 +2,26 @@ package main
 
 import (
 	"path/filepath"
+	"reflect"
 	"testing"
 
 	"golang.org/x/exp/slices"
 )
 
-func TestGetProjectsAndDependencies(t *testing.T) {
+func prepEnv(t *testing.T) string {
 	absPath, err := filepath.Abs("./test_data")
+
 	if err != nil {
 		t.Error("Cannot find test data")
 	}
+
 	t.Setenv("DIR",absPath)
+	return absPath
+}
+
+func TestGetProjectsAndDependencies(t *testing.T) {
+	absPath := prepEnv(t)
+
 	got_projects, got_deps := getProjectsAndDependencies()
 
 	expected_projects := []string{absPath+"/project1", absPath+"/project2"}
@@ -37,6 +46,27 @@ func TestGetProjectsAndDependencies(t *testing.T) {
 }
 
 func TestReadAtlantisYaml(t *testing.T) {
+	absPath, err := filepath.Abs("./test_data")
+
+	if err != nil {
+		t.Error("Cannot find test data")
+	}
+
+	t.Setenv("DIR",absPath)
+	atlantisConfig := readAtlantisYaml()
+
+	expectedConfig := AtlantisConfig{
+		Automerge: true,
+		DeleteSourceBranchOnMerge: true,
+		ParallelApply: true,
+		ParallelPlan: true,
+		Version: 3,
+	}
+
+	if !reflect.DeepEqual(atlantisConfig, expectedConfig) {
+		t.Errorf("Expected Atlantis Config:\n%#v\nGot Atlantis Config:\n%#v", expectedConfig, atlantisConfig)
+	}
+
 }
 
 func TestAddProjectsToConfig(t *testing.T) {
