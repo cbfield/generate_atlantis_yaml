@@ -232,6 +232,15 @@ func TestCleanPaths(t *testing.T) {
 }
 
 func TestUnique(t *testing.T) {
+	dupes := []string{"thing 1", "thing 2", "thing 2"}
+
+	expected := []string{"thing 1", "thing 2"}
+
+	got := unique(dupes)
+
+	if !reflect.DeepEqual(expected, got) {
+		t.Errorf("Expected paths:\n%s\n\nGot Paths:\n%s\n", prettyPrint(expected), prettyPrint(got))
+	}
 }
 
 func TestWriteAtlantisYaml(t *testing.T) {
