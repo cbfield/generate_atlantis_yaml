@@ -227,8 +227,7 @@ func cleanPaths(paths []string, project string) []string {
 	return cleanedPaths
 }
 
-// Take a list of file paths.
-// Return the same list without duplicates.
+// Take a list of file paths and return the same list without duplicates.
 func unique(paths []string) []string {
 	allKeys := make(map[string]bool)
 	uniquePaths := []string{}
