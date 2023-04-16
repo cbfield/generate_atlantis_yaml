@@ -51,7 +51,7 @@ type AutoplanConfig struct {
 //   If it has `.tf` files, load their contents into module object.
 //   If the module has backend config, add dir to the projects list.
 //   If the module calls other modules, add their sources to the dependencies of the dir.
-func GetProjectsAndDependencies() ([]string, map[string][]string) {
+func getProjectsAndDependencies() ([]string, map[string][]string) {
 	projects := []string{}
 	dependencies := make(map[string][]string)
 
@@ -85,7 +85,7 @@ func GetProjectsAndDependencies() ([]string, map[string][]string) {
 			for _, moduleCall := range module.ModuleCalls {
 				absPath := filepath.Join(path, moduleCall.SourceAddr)
 
-				if FileExists(absPath) && !slices.Contains(dependencies[path], moduleCall.SourceAddr) {
+				if fileExists(absPath) && !slices.Contains(dependencies[path], moduleCall.SourceAddr) {
 					dependencies[path] = append(dependencies[path], moduleCall.SourceAddr)
 				}
 			}
@@ -103,7 +103,7 @@ func GetProjectsAndDependencies() ([]string, map[string][]string) {
 
 // Read the contents of `atlantis.yaml` and reflect them into an AtlantisConfig struct.
 // `atlantis.yaml` is expected to exist at the path "${ROOT}/atlantis.yaml"
-func ReadAtlantisYaml() AtlantisConfig {
+func readAtlantisYaml() AtlantisConfig {
 	atlantis_yaml := ROOT + "/atlantis.yaml"
 
 	file, err := ioutil.ReadFile(atlantis_yaml)
@@ -125,7 +125,7 @@ func ReadAtlantisYaml() AtlantisConfig {
 // Add project configurations to the atlantis config.
 // This is done with goroutines because its easy and they make it go zoom zoom real fast.
 // Explanation here: https://gobyexample.com/waitgroups
-func AddProjectsToConfig(atlantisConfig AtlantisConfig, projects []string, dependencies map[string][]string) AtlantisConfig {
+func addProjectsToConfig(atlantisConfig AtlantisConfig, projects []string, dependencies map[string][]string) AtlantisConfig {
 	// If `projects` configurations exist already, overwrite them instead of appending to them.
 	atlantisConfig.Projects = []ProjectConfig{}
 
@@ -134,7 +134,7 @@ func AddProjectsToConfig(atlantisConfig AtlantisConfig, projects []string, depen
 
 	for i := 0; i < len(projects); i++ {
 		go func(i int) {
-			projectConfig := MakeProjectConfig(projects[i], dependencies)
+			projectConfig := makeProjectConfig(projects[i], dependencies)
 			atlantisConfig.Projects = append(atlantisConfig.Projects, projectConfig)
 			defer wg.Done()
 		}(i)
@@ -145,7 +145,7 @@ func AddProjectsToConfig(atlantisConfig AtlantisConfig, projects []string, depen
 }
 
 // Check if there exists a file located at the given path.
-func FileExists(path string) bool {
+func fileExists(path string) bool {
 	_, err := os.Stat(path)
 	if err == nil {
 		return true
@@ -157,9 +157,9 @@ func FileExists(path string) bool {
 }
 
 // Make the project configurations for a single project.
-func MakeProjectConfig(project string, dependencies map[string][]string) ProjectConfig {
-	whenModifiedPaths := GetWhenModifiedPaths(project, dependencies)
-	cleanedPaths := CleanPaths(whenModifiedPaths, project)
+func makeProjectConfig(project string, dependencies map[string][]string) ProjectConfig {
+	whenModifiedPaths := getWhenModifiedPaths(project, dependencies)
+	cleanedPaths := cleanPaths(whenModifiedPaths, project)
 	projectRelativePath := strings.Replace(project, ROOT+"/", "", 1)
 
 	projectConfig := ProjectConfig{
@@ -184,7 +184,7 @@ func MakeProjectConfig(project string, dependencies map[string][]string) Project
 // The paths returned by this function are kinda gross (e.g. "abs/path/to/project1/../modules/module1/../module2")
 // This is because we can't clean the paths while the function recurses.
 // The cleaning is done after the full list is generated.
-func GetWhenModifiedPaths(path string, dependencies map[string][]string) []string {
+func getWhenModifiedPaths(path string, dependencies map[string][]string) []string {
 	paths := []string{}
 
 	// If we are recursing, `path` represents a potentially messy
@@ -197,13 +197,13 @@ func GetWhenModifiedPaths(path string, dependencies map[string][]string) []strin
 
 	for _, dep := range dependencies[cleanPath] {
 		paths = append(paths, path+"/"+dep+"/**/*")
-		paths = append(paths, GetWhenModifiedPaths(path+"/"+dep, dependencies)...)
+		paths = append(paths, getWhenModifiedPaths(path+"/"+dep, dependencies)...)
 	}
 
 	return paths
 }
 
-// Take the paths generated for a project by GetWhenModifiedPaths,
+// Take the paths generated for a project by getWhenModifiedPaths,
 // - ("abs/path/to/project1/../modules/module1/../module2")
 //
 // and turn them into relative paths from the project directory with wildcards.
@@ -211,7 +211,7 @@ func GetWhenModifiedPaths(path string, dependencies map[string][]string) []strin
 //
 // We add wildcards because we want to autoplan based on changes to any files
 // in any subdirectories of each module, in addition to the root directory.
-func CleanPaths(paths []string, project string) []string {
+func cleanPaths(paths []string, project string) []string {
 	cleanedPaths := []string{}
 
 	for _, path := range paths {
@@ -221,13 +221,30 @@ func CleanPaths(paths []string, project string) []string {
 	}
 
 	cleanedPaths = append(cleanedPaths, "**/*")
+	cleanedPaths = unique(cleanedPaths)
 	sort.Strings(cleanedPaths)
 
 	return cleanedPaths
 }
 
+// Take a list of file paths
+// Return the same list without duplicates
+func unique(paths []string) []string {
+	allKeys := make(map[string]bool)
+	uniquePaths := []string{}
+
+	for _, item := range paths {
+			if _, value := allKeys[item]; !value {
+					allKeys[item] = true
+					uniquePaths = append(uniquePaths, item)
+			}
+	}
+
+	return uniquePaths
+}
+
 // Take an AtlantisConfig struct, encode it into yaml, and write it to `atlantis.yaml`.
-func WriteAtlantisYaml(atlantisConfig AtlantisConfig) {
+func writeAtlantisYaml(atlantisConfig AtlantisConfig) {
 	atlantisYaml, err := yaml.Marshal(&atlantisConfig)
 
 	if err != nil {
@@ -250,10 +267,10 @@ func WriteAtlantisYaml(atlantisConfig AtlantisConfig) {
 //
 // Encode contents into yaml and write it back to the file.
 func main() {
-	projects, dependencies := GetProjectsAndDependencies()
+	projects, dependencies := getProjectsAndDependencies()
 
-	atlantisConfig := ReadAtlantisYaml()
-	atlantisConfigComplete := AddProjectsToConfig(atlantisConfig, projects, dependencies)
+	atlantisConfig := readAtlantisYaml()
+	atlantisConfigComplete := addProjectsToConfig(atlantisConfig, projects, dependencies)
 
-	WriteAtlantisYaml(atlantisConfigComplete)
+	writeAtlantisYaml(atlantisConfigComplete)
 }
