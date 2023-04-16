@@ -280,11 +280,11 @@ func TestWriteAtlantisYaml(t *testing.T) {
 	writeAtlantisYaml(atlantisConfig)
 	gotYaml, err := ioutil.ReadFile(absPath+"/atlantis.yaml")
 
-	revertAtlantisYaml(absPath)
-
 	if err != nil {
 		t.Error(err)
 	}
+
+	revertAtlantisYaml(absPath)
 
 	if expectedYaml != string(gotYaml) {
 		t.Errorf("Expected yaml:\n%s\nGot yaml:\n%s\n", expectedYaml, gotYaml)
@@ -320,11 +320,11 @@ func TestMain(t *testing.T) {
 
 		gotYaml, err := ioutil.ReadFile(absPath+"/atlantis.yaml")
 
-		revertAtlantisYaml(absPath)
-
 		if err != nil {
 			t.Error(err)
 		}
+
+		revertAtlantisYaml(absPath)
 
 		if expectedYaml != string(gotYaml) {
 			t.Errorf("Expected yaml:\n%s\n\nGot yaml:\n%s\n",expectedYaml,gotYaml)
