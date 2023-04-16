@@ -4,15 +4,22 @@ on: [push]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
 
-      - name: Set up Go
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Go
         uses: actions/setup-go@v4
         with:
           go-version: 1.19
+      
+      - name: Check Formatting
+        uses: Jerome1337/gofmt-action@v1.0.5
+        with:
+          gofmt-path: './src'
+          gofmt-flags: '-l -d'
 
       - name: Build
         run: go build -i -v ./...
