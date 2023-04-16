@@ -46,11 +46,11 @@ type AutoplanConfig struct {
 
 // Get a list of projects and a map of path dependencies for each project.
 //
-// Walk directory tree. For each dir:
-//   If it is on the ignore list, continue.
-//   If it has `.tf` files, load their contents into module object.
-//   If the module has backend config, add dir to the projects list.
-//   If the module calls other modules, add their sources to the dependencies of the dir.
+// Walk the directory tree, starting at the root of the repository. For each directory:
+//   If it is on the ignore list, skip it and its children.
+//   If it contains Terraform configuration files, load their contents into a module struct.
+//   If the module has backend config, add the directory of the module to the projects list.
+//   If the module calls other modules, add their sources to the dependencies of the directory.
 func getProjectsAndDependencies() ([]string, map[string][]string) {
 	projects := []string{}
 	dependencies := make(map[string][]string)
