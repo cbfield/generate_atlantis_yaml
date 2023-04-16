@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"io/ioutil"
+	"log"
 	"path/filepath"
 	"reflect"
 	"testing"
@@ -23,6 +25,20 @@ func prepEnv(t *testing.T) string {
 func prettyPrint(i interface{}) string {
 	s, _ := json.MarshalIndent(i, "", "  ")
 	return string(s)
+}
+
+func revertAtlantisYaml(absPath string) {
+	baseContent := "automerge: true\n" +
+		"delete_source_branch_on_merge: true\n" +
+		"parallel_apply: true\n" +
+		"parallel_plan: true\n" +
+		"version: 3\n"
+
+	err := ioutil.WriteFile(absPath+"/atlantis.yaml", []byte(baseContent), 0)
+
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func TestGetProjectsAndDependencies(t *testing.T) {
@@ -244,6 +260,35 @@ func TestUnique(t *testing.T) {
 }
 
 func TestWriteAtlantisYaml(t *testing.T) {
+	absPath := prepEnv(t)
+
+	atlantisConfig := AtlantisConfig{
+		Automerge: true,
+		DeleteSourceBranchOnMerge: true,
+		ParallelApply: true,
+		ParallelPlan: true,
+		Version: 4,
+	}
+
+	expectedYaml := "automerge: true\n" +
+		"delete_source_branch_on_merge: true\n" +
+		"parallel_apply: true\n" +
+		"parallel_plan: true\n" +
+		"projects: []\n" +
+		"version: 4\n"
+	
+	writeAtlantisYaml(atlantisConfig)
+	gotYaml, err := ioutil.ReadFile(absPath+"/atlantis.yaml")
+
+	revertAtlantisYaml(absPath)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	if expectedYaml != string(gotYaml) {
+		t.Errorf("Expected yaml:\n%s\nGot yaml:\n%s\n", expectedYaml, gotYaml)
+	}
 }
 
 func TestMain(t *testing.T) {
