@@ -292,4 +292,41 @@ func TestWriteAtlantisYaml(t *testing.T) {
 }
 
 func TestMain(t *testing.T) {
+	absPath := prepEnv(t)
+
+	expectedYaml := "automerge: true\n" +
+		"delete_source_branch_on_merge: true\n" +
+		"parallel_apply: true\n" +
+		"parallel_plan: true\n" +
+		"projects:\n" +
+		"    - autoplan:\n" +
+		"        enabled: true\n" +
+		"        when_modified:\n" +
+		"            - '**/*'\n" +
+		"            - ../modules/module1/**/*\n" +
+		"            - ../modules/module2/**/*\n" +
+		"      name: project1\n" +
+		"      dir: project1\n" +
+		"    - autoplan:\n" +
+		"        enabled: true\n" +
+		"        when_modified:\n" +
+		"            - '**/*'\n" +
+		"            - ../modules/module2/**/*\n" +
+		"      name: project2\n" +
+		"      dir: project2\n" +
+		"version: 3\n"
+
+		main()
+
+		gotYaml, err := ioutil.ReadFile(absPath+"/atlantis.yaml")
+
+		revertAtlantisYaml(absPath)
+
+		if err != nil {
+			t.Error(err)
+		}
+
+		if expectedYaml != string(gotYaml) {
+			t.Errorf("Expected yaml:\n%s\n\nGot yaml:\n%s\n",expectedYaml,gotYaml)
+		}
 }
