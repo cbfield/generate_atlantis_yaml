@@ -124,7 +124,7 @@ func ReadAtlantisYaml() AtlantisConfig {
 }
 
 // Add project configurations to the atlantis config
-// This is done with go routines because its easy and they make it go zoom zoom real fast
+// This is done with goroutines because its easy and they make it go zoom zoom real fast
 // Explanation here: https://gobyexample.com/waitgroups
 func AddProjectsToConfig(atlantisConfig AtlantisConfig, projects []string, dependencies map[string][]string) AtlantisConfig {
 	// If `projects` configurations exist already, overwrite them instead of appending to them
