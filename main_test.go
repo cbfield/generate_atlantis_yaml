@@ -161,6 +161,31 @@ func TestFileExists(t *testing.T) {
 }
 
 func TestMakeProjectConfig(t *testing.T) {
+	absPath := prepEnv(t)
+
+	dependencies := map[string][]string{
+		absPath+"/project1":{"../modules/module1"},
+		absPath+"/modules/module1":{"../module2"},
+	}
+
+	gotConfig := makeProjectConfig(absPath+"/project1",dependencies)
+
+	expectedConfig := ProjectConfig{
+		Name: "project1",
+		Dir: "project1",
+		Autoplan: AutoplanConfig{
+			Enabled: true,
+			WhenModified: []string{
+				"**/*",
+				"../modules/module1/**/*",
+				"../modules/module2/**/*",
+			},
+		},
+	}
+
+	if !reflect.DeepEqual(expectedConfig, gotConfig) {
+		t.Errorf("Expected project config:\n%s\n\nGot project config:\n%s\n",prettyPrint(expectedConfig), prettyPrint(gotConfig))
+	}
 }
 
 func TestGetWhenModifiedPaths(t *testing.T) {
