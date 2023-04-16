@@ -17,8 +17,8 @@ func TestGetProjectsAndDependencies(t *testing.T) {
 
 	expected_projects := []string{absPath+"/project1", absPath+"/project2"}
 	expected_deps := map[string][]string{
-		absPath+"/project1":[]string{"../modules/module1"},
-		absPath+"/project2":[]string{"../modules/module2"},
+		absPath+"/project1":{"../modules/module1"},
+		absPath+"/project2":{"../modules/module2"},
 	}
 
 	if !slices.Equal(got_projects, expected_projects) {
