@@ -19,8 +19,7 @@ import (
 // https://www.runatlantis.io/docs/custom-workflows.html#step
 // "DIR - Absolute path to the current directory."
 //
-// This represents the root of the repository during Atlantis
-// pre-workflow hook execution.
+// This represents the root of the repository during Atlantis pre-workflow hook execution.
 var ROOT = os.Getenv("DIR")
 
 var IGNORE_DIRS = []string{".circleci", ".git", ".github", ".terraform"}
@@ -45,13 +44,13 @@ type AutoplanConfig struct {
 	WhenModified []string `yaml:"when_modified"`
 }
 
-// Get a list of projects and a map of path dependencies for each project
+// Get a list of projects and a map of path dependencies for each project.
 //
 // Walk directory tree. For each dir:
-//   If it is on the ignore list, continue
-//   If it has `.tf` files, load their contents into module object
-//   If the module has backend config, add dir to the projects list
-//   If the module calls other modules, add their sources to the dependencies of the dir
+//   If it is on the ignore list, continue.
+//   If it has `.tf` files, load their contents into module object.
+//   If the module has backend config, add dir to the projects list.
+//   If the module calls other modules, add their sources to the dependencies of the dir.
 func GetProjectsAndDependencies() ([]string, map[string][]string) {
 	projects := []string{}
 	dependencies := make(map[string][]string)
@@ -61,13 +60,15 @@ func GetProjectsAndDependencies() ([]string, map[string][]string) {
 			return err
 		}
 
-		if info.IsDir() && slices.Contains(IGNORE_DIRS, info.Name()) {
+		if !info.IsDir() {
+			return nil
+		}
+
+		if slices.Contains(IGNORE_DIRS, info.Name()) {
 			return filepath.SkipDir
 		}
 
-		if info.IsDir() {
-			dependencies[path] = []string{}
-		}
+		dependencies[path] = []string{}
 
 		if tfconfig.IsModuleDir(path) {
 			parser := configs.NewParser(nil)
@@ -100,10 +101,8 @@ func GetProjectsAndDependencies() ([]string, map[string][]string) {
 	return projects, dependencies
 }
 
-// Read the contents of `atlantis.yaml` and
-// reflect into an AtlantisConfig struct
-//
-// `atlantis.yaml` is expected to exist in ROOT directory
+// Read the contents of `atlantis.yaml` and reflect them into an AtlantisConfig struct.
+// `atlantis.yaml` is expected to exist at the path "${ROOT}/atlantis.yaml"
 func ReadAtlantisYaml() AtlantisConfig {
 	atlantis_yaml := ROOT + "/atlantis.yaml"
 
@@ -123,11 +122,11 @@ func ReadAtlantisYaml() AtlantisConfig {
 	return atlantisConfig
 }
 
-// Add project configurations to the atlantis config
-// This is done with goroutines because its easy and they make it go zoom zoom real fast
+// Add project configurations to the atlantis config.
+// This is done with goroutines because its easy and they make it go zoom zoom real fast.
 // Explanation here: https://gobyexample.com/waitgroups
 func AddProjectsToConfig(atlantisConfig AtlantisConfig, projects []string, dependencies map[string][]string) AtlantisConfig {
-	// If `projects` configurations exist already, overwrite them instead of appending to them
+	// If `projects` configurations exist already, overwrite them instead of appending to them.
 	atlantisConfig.Projects = []ProjectConfig{}
 
 	wg := sync.WaitGroup{}
@@ -145,7 +144,7 @@ func AddProjectsToConfig(atlantisConfig AtlantisConfig, projects []string, depen
 	return atlantisConfig
 }
 
-// Check if there exists a file located at the given path
+// Check if there exists a file located at the given path.
 func FileExists(path string) bool {
 	_, err := os.Stat(path)
 	if err == nil {
@@ -157,7 +156,7 @@ func FileExists(path string) bool {
 	return false
 }
 
-// Make the project configurations for a single project
+// Make the project configurations for a single project.
 func MakeProjectConfig(project string, dependencies map[string][]string) ProjectConfig {
 	whenModifiedPaths := GetWhenModifiedPaths(project, dependencies)
 	cleanedPaths := CleanPaths(whenModifiedPaths, project)
@@ -204,14 +203,14 @@ func GetWhenModifiedPaths(path string, dependencies map[string][]string) []strin
 	return paths
 }
 
-// Take the paths generated for a project by GetWhenModifiedPaths
+// Take the paths generated for a project by GetWhenModifiedPaths,
 // - ("abs/path/to/project1/../modules/module1/../module2")
 //
-// and turn them into relative paths from the project directory with wildcards
+// and turn them into relative paths from the project directory with wildcards.
 // - ("../modules/module2/**/*")
 //
 // We add wildcards because we want to autoplan based on changes to any files
-// in any subdirectories of each module, in addition to the root directory
+// in any subdirectories of each module, in addition to the root directory.
 func CleanPaths(paths []string, project string) []string {
 	cleanedPaths := []string{}
 
@@ -227,7 +226,7 @@ func CleanPaths(paths []string, project string) []string {
 	return cleanedPaths
 }
 
-// Take an AtlantisConfig struct, encode it into yaml, and write it to `atlantis.yaml`
+// Take an AtlantisConfig struct, encode it into yaml, and write it to `atlantis.yaml`.
 func WriteAtlantisYaml(atlantisConfig AtlantisConfig) {
 	atlantisYaml, err := yaml.Marshal(&atlantisConfig)
 
@@ -244,10 +243,10 @@ func WriteAtlantisYaml(atlantisConfig AtlantisConfig) {
 }
 
 // Walk the repository and gather a list of project directories
-// and a map of their dependencies (also directories)
+// and a map of their dependencies (also directories).
 //
-// Load content of `atlantis.yaml` into struct
-// add autoplan configurations for each project
+// Load content of `atlantis.yaml` into a struct.
+// Add autoplan configurations for each project.
 //
 // Encode contents into yaml and write it back to the file.
 func main() {
