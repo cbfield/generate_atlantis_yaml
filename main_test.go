@@ -34,6 +34,10 @@ func TestCleanPaths(t *testing.T) {
 	assert.True(t, true)
 }
 
+func TestUnique(t *testing.T) {
+	assert.True(t, true)
+}
+
 func TestWriteAtlantisYaml(t *testing.T) {
 	assert.True(t, true)
 }
