@@ -47,11 +47,11 @@ type AutoplanConfig struct {
 
 // Get a list of projects and a map of path dependencies for each project
 //
-//	Walk directory tree. For each dir:
-//			If it is on the ignore list, continue
-//			If it has `.tf` files, load their contents into module object
-//			If the module has backend config, add dir to the projects list
-//			If the module calls other modules, add their sources to the dependencies of the dir
+// Walk directory tree. For each dir:
+//   If it is on the ignore list, continue
+//   If it has `.tf` files, load their contents into module object
+//   If the module has backend config, add dir to the projects list
+//   If the module calls other modules, add their sources to the dependencies of the dir
 func GetProjectsAndDependencies() ([]string, map[string][]string) {
 	projects := []string{}
 	dependencies := make(map[string][]string)
