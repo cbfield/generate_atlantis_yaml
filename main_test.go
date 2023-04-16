@@ -66,10 +66,66 @@ func TestReadAtlantisYaml(t *testing.T) {
 	if !reflect.DeepEqual(atlantisConfig, expectedConfig) {
 		t.Errorf("Expected Atlantis Config:\n%#v\nGot Atlantis Config:\n%#v", expectedConfig, atlantisConfig)
 	}
-
 }
 
 func TestAddProjectsToConfig(t *testing.T) {
+	absPath := prepEnv(t)
+
+	expectedConfig := AtlantisConfig{
+		Automerge: true,
+		DeleteSourceBranchOnMerge: true,
+		ParallelApply: true,
+		ParallelPlan: true,
+		Projects: []ProjectConfig{
+			{
+				Name: "project1",
+				Dir: "project1",
+				Autoplan: AutoplanConfig{
+					Enabled: true,
+					WhenModified: []string{
+						"**/*",
+						"../modules/module1/**/*",
+						"../modules/module2/**/*",
+					},
+				},
+			},
+			{
+				Name: "project2",
+				Dir: "project2",
+				Autoplan: AutoplanConfig{
+					Enabled: true,
+					WhenModified: []string{
+						"**/*",
+						"../modules/module2/**/*",
+					},
+				},
+			},
+		},
+		Version: 3,
+	}
+
+	projects := []string{absPath+"/project1", absPath+"/project2"}
+
+	dependencies := map[string][]string{
+		absPath+"/project1":{"../modules/module1"},
+		absPath+"/project2":{"../modules/module2"},
+		absPath+"/modules/module1":{"../module2"},
+		absPath+"/modules/module2":{},
+	}
+
+	atlantisConfig := AtlantisConfig{
+		Automerge: true,
+		DeleteSourceBranchOnMerge: true,
+		ParallelApply: true,
+		ParallelPlan: true,
+		Version: 3,
+	}
+
+	completeConfig := addProjectsToConfig(atlantisConfig, projects, dependencies)
+
+	if !reflect.DeepEqual(expectedConfig, completeConfig) {
+		t.Errorf("Expected Atlantis Config:\n%#v\nGot Atlantis Config:\n%#v\n",expectedConfig,completeConfig)
+	}
 }
 
 func TestFileExists(t *testing.T) {
