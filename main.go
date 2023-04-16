@@ -141,6 +141,10 @@ func addProjectsToConfig(atlantisConfig AtlantisConfig, projects []string, depen
 	}
 
 	wg.Wait()
+
+	sort.Slice(atlantisConfig.Projects, func(i, j int) bool {
+		return atlantisConfig.Projects[i].Name < atlantisConfig.Projects[j].Name
+	})
 	return atlantisConfig
 }
 
