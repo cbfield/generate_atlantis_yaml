@@ -189,6 +189,25 @@ func TestMakeProjectConfig(t *testing.T) {
 }
 
 func TestGetWhenModifiedPaths(t *testing.T) {
+	absPath := prepEnv(t)
+
+	dependencies := map[string][]string{
+		absPath+"/project1":{"../modules/module1"},
+		absPath+"/project2":{"../modules/module2"},
+		absPath+"/modules/module1":{"../module2"},
+		absPath+"/modules/module2":{},
+	}
+
+	gotPaths := getWhenModifiedPaths(absPath+"/project1",dependencies)
+
+	expectedPaths := []string{
+		absPath+"/project1/../modules/module1/**/*",
+		absPath+"/project1/../modules/module1/../module2/**/*",
+	}
+
+	if !reflect.DeepEqual(expectedPaths, gotPaths) {
+		t.Errorf("Expected paths:\n%s\n\nGot Paths:\n%s\n", prettyPrint(expectedPaths), prettyPrint(gotPaths))
+	}
 }
 
 func TestCleanPaths(t *testing.T) {
